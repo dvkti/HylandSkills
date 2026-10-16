@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>HylandSkills</AssemblyName>
+    <RootNamespace>HylandSkills</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS0618;MSB3277</NoWarn>
+    <Version>1.1.0</Version>
+    <!-- Thunderstore profile that hosts MelonLoader, S1API and the generated interop assemblies -->
+    <S1Profile Condition="'$(S1Profile)' == ''">$(APPDATA)\Thunderstore Mod Manager\DataFolder\ScheduleI\profiles\Default</S1Profile>
+    <MLDir>$(S1Profile)\MelonLoader\net6</MLDir>
+    <InteropDir>$(S1Profile)\MelonLoader\Il2CppAssemblies</InteropDir>
+    <S1APIDll>$(S1Profile)\Mods\ifBars-S1API_Forked\Mods\S1API.Il2Cpp.MelonLoader.dll</S1APIDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Icons\*.png" LogicalName="HylandSkills.Icons.%(Filename).png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MelonLoader"><HintPath>$(MLDir)\MelonLoader.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(MLDir)\0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Il2CppInterop.Runtime"><HintPath>$(MLDir)\Il2CppInterop.Runtime.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Il2CppInterop.Common"><HintPath>$(MLDir)\Il2CppInterop.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(MLDir)\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="S1API"><HintPath>$(S1APIDll)</HintPath><Private>false</Private></Reference>
+    <Reference Include="$(InteropDir)\*.dll" Exclude="$(InteropDir)\Il2CppMono.*.dll"><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <!-- Copy the built mod straight into the profile's Mods folder -->
+  <Target Name="DeployToProfile" AfterTargets="Build" Condition="'$(Deploy)' == 'true'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(S1Profile)\Mods" />
+  </Target>
+</Project>

@@ -1,0 +1,17 @@
+# build output
+bin/
+obj/
+*.user
+.vs/
+
+# local tools and caches
+*.whl
+__pycache__/
+*.pyc
+
+# packaged releases go to GitHub Releases, not the repo
+dist/*.zip
+dist/pkg/Mods/
+
+# local editor / agent settings
+.claude/

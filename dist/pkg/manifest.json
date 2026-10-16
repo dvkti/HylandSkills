@@ -1,0 +1,10 @@
+{
+  "name": "HylandSkills",
+  "version_number": "1.1.0",
+  "website_url": "",
+  "description": "A native-feeling skill tree for Schedule I: 8 categories, Cyberpunk-style perk trees, combos, casino and mobility skills, clear ability timers, all on your phone.",
+  "dependencies": [
+    "LavaGang-MelonLoader-0.7.2",
+    "ifBars-S1API_Forked-3.2.1"
+  ]
+}
