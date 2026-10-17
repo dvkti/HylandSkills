@@ -128,6 +128,27 @@ namespace HylandSkills.Core
                     }
                     break;
                 }
+                case "learn":
+                {
+                    var d = Data.SkillDb.Get(rest);
+                    Out($"learn {rest}: {(d == null ? "unknown" : Skills.CanLearn(d) + " -> " + Skills.TryLearn(d))} (rank {Skills.Rank(rest)}, points {Skills.AvailablePoints})");
+                    break;
+                }
+                case "equip":
+                {
+                    var p = rest.Split(' ');
+                    ActiveManager.Equip(int.Parse(p[0]), p[1]);
+                    Out($"equip {p[1]} in {p[0]}: cooldown {ActiveManager.CooldownLeft(p[1]):0.#}");
+                    break;
+                }
+                case "activate":
+                    Out($"activate {rest}: {ActiveManager.TryActivate(rest)} running {ActiveManager.IsRunning(rest)} left {ActiveManager.RunningLeft(rest):0.#} cooldown {ActiveManager.CooldownLeft(rest):0.#}");
+                    break;
+                case "ready":
+                    Skills.Data.GameCooldownUntil.Remove(rest);
+                    Skills.Data.RealCooldownLeft.Remove(rest);
+                    Out("ready " + rest);
+                    break;
                 case "save":
                     Out("save requested: " + S1API.Internal.Abstraction.Saveable.RequestGameSave());
                     break;
@@ -179,7 +200,7 @@ namespace HylandSkills.Core
             Out($"set {expr} = {literal}");
         }
 
-        static bool IsRootObject(string seg) => seg.StartsWith("find:") || seg.StartsWith("res:") || seg.StartsWith("new:") || seg.StartsWith("list:") || seg == "player";
+        static bool IsRootObject(string seg) => seg.StartsWith("[") || seg.StartsWith("find:") || seg.StartsWith("res:") || seg.StartsWith("new:") || seg.StartsWith("list:") || seg == "player";
 
         static object Resolve(List<string> segs) => Resolve(segs, out _);
 
@@ -439,6 +460,7 @@ namespace HylandSkills.Core
 
         static object ConvertArg(object a, Type t)
         {
+            if (t.IsByRef) t = t.GetElementType(); // out/ref parameters: pass the value, the result is discarded
             if (a == null) return null;
             if (t.IsInstanceOfType(a)) return a;
             if (a is Il2CppObjectBase ob && typeof(Il2CppObjectBase).IsAssignableFrom(t))

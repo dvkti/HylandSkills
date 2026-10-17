@@ -23,6 +23,7 @@ namespace HylandSkills.Effects
         {
             baseGrowSpeed.Clear();
             baseDrain.Clear();
+            baseShroomTime.Clear();
         }
 
         public override void CollectStatus(System.Collections.Generic.List<StatusInfo> list) { }
@@ -238,13 +239,20 @@ namespace HylandSkills.Effects
         }
 
         // ---------------------------------------------------------------- mushrooms
-        [HarmonyPatch(typeof(ShroomColony), nameof(ShroomColony.GetCurrentGrowthRate))]
+        // GetCurrentGrowthRate is inlined into the colony's minute tick, so the speed comes from its grow time.
+        static readonly TrackedBase baseShroomTime = new TrackedBase();
+
+        [HarmonyPatch(typeof(ShroomColony), nameof(ShroomColony.OnMinPass))]
         static class ShroomGrowthPatch
         {
-            static void Postfix(ref float __result)
+            static void Prefix(ShroomColony __instance)
             {
-                if (Skills.Has("mycologist")) __result *= 1f + Skills.Pct("mycologist");
-                if (Skills.Has("living_soil")) __result *= 1f - Skills.Pct2("living_soil");
+                if (__instance == null) return;
+                float speed = 1f;
+                if (Skills.Has("mycologist")) speed *= 1f + Skills.Pct("mycologist");
+                if (Skills.Has("living_soil")) speed *= 1f - Skills.Pct2("living_soil");
+                float t = baseShroomTime.Scale(__instance.Pointer, __instance._growTime, b => Mathf.Max(1f, Mathf.Round(b / speed)));
+                if ((int)t != __instance._growTime) __instance._growTime = (int)t;
             }
         }
 

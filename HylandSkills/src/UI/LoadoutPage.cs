@@ -240,6 +240,31 @@ namespace HylandSkills.UI
             Refresh();
         }
 
+        static readonly string ReadyHex = ColorUtility.ToHtmlStringRGB(Hex("7BD957"));
+
+        /// <summary>Ready, running, or how long until it can be used (equipping a skill starts its cooldown).</summary>
+        static string SlotStatus(SkillDef d)
+        {
+            if (ActiveManager.IsRunning(d.Id)) return $"<color=#{ReadyHex}>Active</color>";
+            float cd = ActiveManager.CooldownLeft(d.Id);
+            return cd > 0 ? $"Ready in {ActiveManager.FormatTime(cd, d.Clock)}" : $"<color=#{ReadyHex}>Ready</color>";
+        }
+
+        float timerRefresh;
+
+        /// <summary>Keeps the slot timers current while the page is open.</summary>
+        public void TickTimers(float dt)
+        {
+            timerRefresh -= dt;
+            if (timerRefresh > 0 || Root == null) return;
+            timerRefresh = 0.5f;
+            for (int i = 0; i < ActiveLoadout.Slots; i++)
+            {
+                var d = SkillDb.Get(ActiveManager.Slot(i));
+                if (d != null) slotSub[i].text = $"{SkillDb.Info(d.Branch).Name} · {SlotStatus(d)}";
+            }
+        }
+
         public void Refresh()
         {
             if (Root == null) return;
@@ -257,8 +282,7 @@ namespace HylandSkills.UI
                     slotIcon[i].sprite = Icons.Get(d.Icon);
                     slotIcon[i].color = info.Color;
                     slotName[i].text = d.Name;
-                    string cd = d.Clock == CooldownClock.GameMinutes ? BranchPage.GameSpan(d.Cooldown) : BranchPage.RealSpan(d.Cooldown);
-                    slotSub[i].text = $"{info.Name} · Cooldown {cd}";
+                    slotSub[i].text = $"{info.Name} · {SlotStatus(d)}";
                 }
                 else
                 {
@@ -268,7 +292,7 @@ namespace HylandSkills.UI
                 slotRemove[i].gameObject.SetActive(d != null);
             }
             string key = Prefs.KeyLabel(Prefs.SlotKeys[selectedSlot].Value);
-            listCaption.text = $"Click a skill to put it in slot <b>{key}</b>. A skill can only be in one slot.";
+            listCaption.text = $"Click a skill to equip it in slot <b>{key}</b>. Equipping starts its cooldown.";
             RebuildList();
         }
     }

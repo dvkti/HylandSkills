@@ -687,15 +687,16 @@ namespace HylandSkills.UI
         {
             int m = (int)minutes;
             if (m % 1440 == 0) return m == 1440 ? "1 day" : $"{m / 1440} days";
-            if (m % 60 == 0) return m == 60 ? "1 hour" : $"{m / 60} hours";
+            if (m >= 60) return m % 60 == 0 ? $"{m / 60} h" : $"{m / 60} h {m % 60} min";
             return $"{m} min";
         }
 
+        /// <summary>Real-time spans, written like the HUD timers ("15 s", "2 min").</summary>
         public static string RealSpan(float seconds)
         {
             int s = (int)seconds;
-            if (s >= 60 && s % 60 == 0) return s == 60 ? "1 real minute" : $"{s / 60} real minutes";
-            return $"{s} seconds";
+            if (s < 60) return $"{s} s";
+            return s % 60 == 0 ? $"{s / 60} min" : $"{s / 60}:{s % 60:00} min";
         }
 
         /// <summary>Animations for what changed since the last refresh: lines grow toward newly learned skills, then

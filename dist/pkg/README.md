@@ -19,6 +19,7 @@ A skill tree expansion for **Schedule I** that lives on your phone. Eight catego
 
 - Open the **Skills** app on your phone.
 - Active skills go into **4 slots**. The ⚡ button in the app opens the active skills menu: pick a slot, click any learned active skill to put it there, **Remove** to clear it, or click the key to rebind it (defaults **Z, X, B, N**).
+- **Your kit is a choice.** A skill you put in a slot starts on cooldown (game-clock skills wait at most 12 in-game hours), so swapping actives for every situation doesn't pay. Moving a skill to another slot is free, and each slot shows when its skill is ready.
 - Each equipped active shows as a card on screen: **READY**, **ACTIVE** with time left, or **COOLDOWN** with time left. Place the cards in any of 9 positions and change their size and opacity.
 
 ## Branches
@@ -36,9 +37,16 @@ A skill tree expansion for **Schedule I** that lives on your phone. Eight catego
 
 ## Installation
 
-1. Install **MelonLoader** and **S1API (Forked)** (Thunderstore / r2modman handles this for you).
-2. Put `HylandSkills.dll` in your `Mods` folder.
-3. Start the game and open the **Skills** app on your phone.
+**Thunderstore Mod Manager / r2modman (recommended)**
+
+1. Install **MelonLoader** and **S1API (Forked)** in your profile.
+2. Download `GetToWorkTylerPls-HylandSkills-<version>.zip` from the [Releases](https://github.com/dvkti/HylandSkills/releases) page. Use that file, not GitHub's "Source code" zip.
+3. In the mod manager: **Settings → Import local mod → Select file**, pick the zip and click **Import local mod**. Close the game first.
+4. Start the game and open the **Skills** app on your phone.
+
+If you installed an older version by copying `HylandSkills.dll` into `Mods` by hand, delete that copy first so the game doesn't load the mod twice.
+
+**Manual install:** put `HylandSkills.dll` straight into the game's (or profile's) `Mods` folder. If you put it in a subfolder, MelonLoader only loads it when the subfolder also has the package's `manifest.json`.
 
 Skill data is saved inside your game save (`Modded/Saveables/SkillSaveable`), so every save slot has its own tree.
 

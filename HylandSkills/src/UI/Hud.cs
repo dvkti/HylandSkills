@@ -28,6 +28,9 @@ namespace HylandSkills.UI
         static readonly Card[] cards = new Card[ActiveLoadout.Slots];
         static readonly List<Card> statusCards = new List<Card>();
         static TextMeshProUGUI toast;
+        /// <summary>Copy of the toast on its own canvas, shown while the game hides its HUD (casino tables, etc.).</summary>
+        static TextMeshProUGUI overlayToast;
+        static GameObject overlay;
         static float toastTime;
         static readonly Dictionary<string, float> readyFlash = new Dictionary<string, float>();
         static readonly HashSet<string> wasCooling = new HashSet<string>();
@@ -64,6 +67,7 @@ namespace HylandSkills.UI
             toast.outlineColor = new Color32(0, 0, 0, 210);
             toast.enableWordWrapping = false;
             toast.rectTransform.sizeDelta = new Vector2(660, 32);
+            CreateOverlayToast(hud.canvas);
 
             ActiveManager.ActivationFailed += OnActivationFailed;
             ActiveManager.Activated += OnActivated;
@@ -76,10 +80,38 @@ namespace HylandSkills.UI
             ActiveManager.Activated -= OnActivated;
             if (root != null) Object.Destroy(root.gameObject);
             root = null;
+            if (overlay != null) Object.Destroy(overlay);
+            overlay = null;
+            overlayToast = null;
             PoliceMarkers.Clear();
             statusCards.Clear();
             readyFlash.Clear();
             wasCooling.Clear();
+        }
+
+        static void CreateOverlayToast(Canvas hud)
+        {
+            overlay = new GameObject("HylandSkillsToast");
+            var canvas = overlay.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 50;
+            var scaler = overlay.AddComponent<CanvasScaler>();
+            var hudScaler = hud.GetComponent<CanvasScaler>();
+            if (hudScaler != null)
+            {
+                scaler.uiScaleMode = hudScaler.uiScaleMode;
+                scaler.referenceResolution = hudScaler.referenceResolution;
+                scaler.screenMatchMode = hudScaler.screenMatchMode;
+                scaler.matchWidthOrHeight = hudScaler.matchWidthOrHeight;
+                scaler.scaleFactor = hudScaler.scaleFactor;
+            }
+            var rt = overlay.GetComponent<RectTransform>();
+            overlayToast = Label("Toast", rt, "", 24, Theme.Text, TextAlignmentOptions.Center, FontStyles.Bold);
+            overlayToast.outlineWidth = 0.2f;
+            overlayToast.outlineColor = new Color32(0, 0, 0, 220);
+            overlayToast.enableWordWrapping = false;
+            overlayToast.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0, -150), new Vector2(900, 36));
+            overlay.SetActive(false);
         }
 
         static Card MakeCard(RectTransform parent, string name, bool withKey)
@@ -214,6 +246,7 @@ namespace HylandSkills.UI
             if (toast == null) return;
             toast.text = text;
             toast.color = color;
+            if (overlayToast != null) { overlayToast.text = text; overlayToast.color = color; }
             toastTime = 2.6f;
         }
 
@@ -247,10 +280,18 @@ namespace HylandSkills.UI
             {
                 toastTime -= dt;
                 toast.alpha = Mathf.Clamp01(toastTime / 0.4f);
+                if (overlayToast != null) overlayToast.alpha = toast.alpha;
             }
             else if (toast.text.Length > 0) toast.text = "";
+            if (overlay != null)
+            {
+                var hudCanvas = Singleton<Il2CppScheduleOne.UI.HUD>.InstanceExists ? Singleton<Il2CppScheduleOne.UI.HUD>.Instance.canvas : null;
+                bool hudHidden = hudCanvas == null || !hudCanvas.enabled;
+                bool show = hudHidden && toastTime > 0;
+                if (overlay.activeSelf != show) overlay.SetActive(show);
+            }
 
-            PoliceMarkers.Tick(root);
+            PoliceMarkers.Tick(root, Singleton<Il2CppScheduleOne.UI.HUD>.InstanceExists ? Singleton<Il2CppScheduleOne.UI.HUD>.Instance.canvas : null);
             if (dirty) Relayout();
         }
 

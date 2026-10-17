@@ -9,6 +9,7 @@ using Il2CppScheduleOne.Economy;
 using Il2CppScheduleOne.ItemFramework;
 using Il2CppScheduleOne.NPCs.Relation;
 using Il2CppScheduleOne.Product;
+using Il2CppScheduleOne.Quests;
 using Il2CppScheduleOne.SpecialCustomers;
 using UnityEngine;
 
@@ -19,12 +20,17 @@ namespace HylandSkills.Effects
     {
         static readonly TrackedBase baseCut = new TrackedBase();
 
-        public override void Reset() => baseCut.Clear();
+        public override void Reset()
+        {
+            RestoreCrowdQuantity(); // the crowd data are assets that outlive the save
+            baseCut.Clear();
+        }
 
         public override void Apply()
         {
             ApplyDealerCut();
             ApplyCrowdReturn();
+            ApplyCrowdQuantity();
         }
 
         public override void MinutePass(int now, int previous)
@@ -33,51 +39,75 @@ namespace HylandSkills.Effects
         }
 
         // ---------------------------------------------------------------- payment on handover
+        /// <summary>Payment multiplier for a handover, and the labels of the bonuses worth naming.</summary>
+        static float PaymentMultiplier(Il2CppSystem.Collections.Generic.List<ItemInstance> items, bool byPlayer, bool byDealer, List<string> notes)
+        {
+            float m = 1f;
+            if (Skills.Has("premium_brand")) m += Skills.Pct("premium_brand");
+            if (byPlayer && ActiveManager.IsRunning("rush_hour")) { m += Data.SkillDb.Get("rush_hour").Value / 100f; notes.Add("Rush Hour"); }
+            if (G.IsCurfew)
+            {
+                if (Skills.Has("night_king")) m += Skills.Pct("night_king");
+                if (Skills.SynergyActive("back_alley")) m += 0.10f;
+            }
+            if (byDealer && Skills.Has("kingmaker")) m += 0.10f;
+
+            if (Skills.Has("complex_formulas") && items != null)
+            {
+                int complex = 0, simple = 0;
+                foreach (var it in items)
+                {
+                    var p = it?.TryCast<ProductItemInstance>();
+                    var def = p?.Definition?.TryCast<ProductDefinition>();
+                    if (def == null) continue;
+                    int effects = def.Properties != null ? def.Properties.Count : 0;
+                    if (effects >= 3) complex++; else simple++;
+                }
+                if (complex > 0 && simple == 0) m += Skills.Pct("complex_formulas");
+                else if (simple > 0) m -= Skills.Pct2("complex_formulas");
+            }
+
+            if (byPlayer && Skills.Has("street_legend") && EffectHub.Roll(0.15f)) { m += 0.10f; notes.Add("Tip"); }
+            return m;
+        }
+
+        /// <summary>
+        /// A player's own deal pays the contract's Payment (the totalPayment sent to the server RPC only feeds the
+        /// records and dealers), so player-deal bonuses scale the contract right before the handover is processed.
+        /// </summary>
+        [HarmonyPatch(typeof(Customer), nameof(Customer.ProcessHandover))]
+        static class PlayerPayment
+        {
+            static void Prefix(Customer __instance, Contract contract, Il2CppSystem.Collections.Generic.List<ItemInstance> items, bool handoverByPlayer)
+            {
+                if (!handoverByPlayer || contract == null || contract.Payment <= 0) return;
+                var notes = new List<string>();
+                float m = PaymentMultiplier(items, true, false, notes);
+                float before = contract.Payment;
+                if (Mod.Tracing) Mod.Debug($"[trace] Player deal: x{m:0.###} on {before:0.##} (curfew {G.IsCurfew})");
+                if (Mathf.Approximately(m, 1f)) return;
+                contract.Payment = Mathf.Max(1f, Mathf.Round(before * m));
+                float diff = contract.Payment - before;
+                if (Mathf.Abs(diff) >= 1f)
+                {
+                    string label = notes.Count > 0 ? string.Join(" + ", notes) : "Skills";
+                    UI.Hud.ShowToast($"{label}: {(diff > 0 ? "+" : "-")}${Mathf.Abs(diff):N0}", diff > 0 ? UI.UiKit.Theme.Accent : UI.UiKit.Theme.Warn);
+                }
+            }
+        }
+
+        /// <summary>Dealer deals: the server computes the dealer's cut and your share from totalPayment.</summary>
         [HarmonyPatch(typeof(Customer), nameof(Customer.RpcLogic___ProcessHandoverServerSide_3315874220))]
         static class Payment
         {
             static void Prefix(Customer __instance, Il2CppSystem.Collections.Generic.List<ItemInstance> items, bool handoverByPlayer, ref float totalPayment, NetworkObject dealerObject)
             {
                 if (totalPayment <= 0) return;
-                float m = 1f;
-                var notes = new List<string>();
-
-                if (Skills.Has("premium_brand")) m += Skills.Pct("premium_brand");
-                if (handoverByPlayer && ActiveManager.IsRunning("rush_hour")) { m += Data.SkillDb.Get("rush_hour").Value / 100f; notes.Add("Rush Hour"); }
-                if (G.IsCurfew)
-                {
-                    if (Skills.Has("night_king")) m += Skills.Pct("night_king");
-                    if (Skills.SynergyActive("back_alley")) m += 0.10f;
-                }
-                if (dealerObject != null && Skills.Has("kingmaker")) m += 0.10f;
-
-                if (Skills.Has("complex_formulas"))
-                {
-                    int complex = 0, simple = 0;
-                    foreach (var it in items)
-                    {
-                        var p = it?.TryCast<ProductItemInstance>();
-                        var def = p?.Definition?.TryCast<ProductDefinition>();
-                        if (def == null) continue;
-                        int effects = def.Properties != null ? def.Properties.Count : 0;
-                        if (effects >= 3) complex++; else simple++;
-                    }
-                    if (complex > 0 && simple == 0) m += Skills.Pct("complex_formulas");
-                    else if (simple > 0) m -= Skills.Pct2("complex_formulas");
-                }
-
-                if (handoverByPlayer && Skills.Has("street_legend") && EffectHub.Roll(0.15f)) { m += 0.10f; notes.Add("Tip"); }
-
-                if (Mod.Tracing) Mod.Debug($"[trace] Payment: x{m:0.###} on {totalPayment:0.##} (player {handoverByPlayer}, dealer {dealerObject != null}, curfew {G.IsCurfew})");
+                if (handoverByPlayer) return; // a player's own deal pays from the contract (scaled in ProcessHandover)
+                float m = PaymentMultiplier(items, false, dealerObject != null, new List<string>());
+                if (Mod.Tracing) Mod.Debug($"[trace] Dealer deal: x{m:0.###} on {totalPayment:0.##} (dealer {dealerObject != null}, curfew {G.IsCurfew})");
                 if (Mathf.Approximately(m, 1f)) return;
-                float before = totalPayment;
                 totalPayment = Mathf.Max(1f, Mathf.Round(totalPayment * m));
-                float diff = totalPayment - before;
-                if (handoverByPlayer && Mathf.Abs(diff) >= 1f)
-                {
-                    string label = notes.Count > 0 ? string.Join(" + ", notes) : "Skills";
-                    UI.Hud.ShowToast($"{label}: {(diff > 0 ? "+" : "-")}${Mathf.Abs(diff):N0}", diff > 0 ? UI.UiKit.Theme.Accent : UI.UiKit.Theme.Warn);
-                }
             }
         }
 
@@ -194,14 +224,41 @@ namespace HylandSkills.Effects
         }
 
         // ---------------------------------------------------------------- special customers (Hippies, Bikers, Party Bus)
-        [HarmonyPatch(typeof(SpecialCustomerData), nameof(SpecialCustomerData.GetBuyQuantityForPlayerRank))]
-        static class CrowdQuantity
+        // GetBuyQuantityForPlayerRank is inlined where the game reads it, so Party Planner scales the crowd data it
+        // is computed from (base amount, extra per rank and maximum) instead.
+        static readonly TrackedBase crowdQuantity = new TrackedBase();
+
+        static IEnumerable<SpecialCustomerData> CrowdData()
         {
-            static void Postfix(SpecialCustomerData __instance, ref int __result)
+            SpecialCustomerData[] all;
+            try { all = Resources.FindObjectsOfTypeAll<SpecialCustomerData>(); } catch { yield break; }
+            foreach (var d in all) if (d != null) yield return d;
+        }
+
+        static void ScaleCrowd(SpecialCustomerData d, float mult)
+        {
+            var key = d.Pointer;
+            int Scale(string field, int current, int salt)
             {
-                if (!Skills.Has("party_planner") || __instance == null) return;
-                __result = Mathf.RoundToInt(__result * (1f + Skills.Pct("party_planner")));
+                float v = crowdQuantity.Scale(new IntPtr(key.ToInt64() ^ salt), current, b => Mathf.Round(b * mult));
+                return (int)v;
             }
+            int b0 = Scale("base", d._baseBuyQuantity, 0x11), b1 = Scale("rank", d._additionalBuyQuantityPerRank, 0x22), b2 = Scale("max", d._maxBuyQuantity, 0x33);
+            if (b0 != d._baseBuyQuantity) d._baseBuyQuantity = b0;
+            if (b1 != d._additionalBuyQuantityPerRank) d._additionalBuyQuantityPerRank = b1;
+            if (b2 != d._maxBuyQuantity) d._maxBuyQuantity = b2;
+        }
+
+        static void ApplyCrowdQuantity()
+        {
+            float mult = 1f + Skills.Pct("party_planner");
+            foreach (var d in CrowdData()) ScaleCrowd(d, mult);
+        }
+
+        static void RestoreCrowdQuantity()
+        {
+            foreach (var d in CrowdData()) ScaleCrowd(d, 1f);
+            crowdQuantity.Clear();
         }
 
         static readonly TrackedBase crowdReturn = new TrackedBase();
@@ -229,26 +286,40 @@ namespace HylandSkills.Effects
         }
 
         // ---------------------------------------------------------------- helpers for actives
-        public static int HypeText(int count)
+        /// <summary>Customers Hype Text can reach: free, awake, no deal pending, and wanting something you sell.</summary>
+        public static List<Customer> HypeCandidates()
         {
-            var list = Customer.UnlockedCustomers;
-            if (list == null) return 0;
             var candidates = new List<Customer>();
+            var list = Customer.UnlockedCustomers;
+            if (list == null) return candidates;
             foreach (var c in list)
             {
                 if (c == null || c.CurrentContract != null || c.OfferedContractInfo != null || c.AssignedDealer != null) continue;
                 if (c.NPC == null || !c.NPC.IsConscious) continue;
+                try
+                {
+                    var products = c.GetOrderableProducts(null);
+                    if (products == null || products.Count == 0) continue;
+                }
+                catch { continue; }
                 candidates.Add(c);
             }
+            return candidates;
+        }
+
+        /// <summary>Sends deal requests; only customers who actually made an offer are counted.</summary>
+        public static int HypeText(int count)
+        {
             int sent = 0;
-            foreach (var c in candidates.OrderBy(_ => EffectHub.Rand()))
+            foreach (var c in HypeCandidates().OrderBy(_ => EffectHub.Rand()))
             {
                 if (sent >= count) break;
                 try
                 {
                     c.ForceDealOffer();
+                    if (c.OfferedContractInfo == null) continue;
                     sent++;
-                    // Viral combo: Hype Text + Free Taste makes the people you text like you more.
+                    // Viral combo: Hype Text + Party Planner makes the people you text like you more.
                     if (Skills.Combo("viral")) c.NPC?.RelationData?.ChangeRelationship(0.25f, true);
                 }
                 catch (Exception e) { Mod.Debug("Hype: " + e.Message); }

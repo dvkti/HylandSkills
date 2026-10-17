@@ -129,11 +129,11 @@ namespace HylandSkills.Data
             P(b, 1, 2, "green_sense", "Green Sense", 3, 6, "Each harvest has a {0}% chance to come out one quality tier higher.", P_("green_thumb"), "sparkles");
             T(b, 2, 1, "organic_methods", "Organic Methods", 2, 10, 10, "Plants grown without Speed Grow or PGR get a +{0}% chance to come out one tier higher.",
                 "Plants grown with them yield {1}% less.", P_("green_sense"), "leaf");
-            A(b, 2, 3, "prune", "Prune", 3, 30, 1, CooldownClock.GameMinutes, 180, 0,
+            A(b, 2, 3, "prune", "Prune", 3, 30, 1, CooldownClock.GameMinutes, 120, 0,
                 "Look at a growing plant: it yields {0}% less, but everything it gives comes out {1} quality tier higher.", P_("green_sense"), "scissors");
             T(b, 3, 4, "living_soil", "Living Soil", 4, 0, 12, "Soil never wears out.", "Plants grow {1}% slower.", P_("deep_roots"), "shovel");
-            A(b, 4, 2, "grow_overdrive", "Grow Lights Overdrive", 4, 35, 2, CooldownClock.GameMinutes, 1440, 240,
-                "For 4 hours, plants on this property grow {0}% faster but drink water {1}x as fast.", P_("prune"), "sun");
+            A(b, 4, 2, "grow_overdrive", "Grow Lights Overdrive", 4, 50, 1.5f, CooldownClock.GameMinutes, 1440, 360,
+                "For 6 hours, plants on this property grow {0}% faster but drink water {1}x as fast.", P_("prune"), "sun");
             M(b, 1, "heirloom_genetics", "Heirloom Genetics", 20, "Each harvest has a {0}% chance to come out two quality tiers higher.", "dna");
             M(b, 2, "mycologist", "Mycologist", 25, "Mushroom colonies grow {0}% faster and each shroom harvest has a {0}% chance to give one extra.", "umbrella");
             M(b, 3, "head_botanist", "Head Botanist", 30, "Botanists work {0}% faster.", "user-cog", 20, "Botanists ask for {1}% higher wages.");
@@ -147,8 +147,8 @@ namespace HylandSkills.Data
             P(b, 0, 3, "mixologist", "Mixologist", 2, 15, "Mixing stations work {0}% faster.", null, "beaker");
             P(b, 1, 0, "precise_measures", "Precise Measures", 3, 6, "{0}% chance for meth and cocaine batches to come out one tier higher.", P_("steady_hands"), "pipette");
             P(b, 1, 4, "ingredient_saver", "Ingredient Saver", 3, 7, "{0}% chance to get the mixer ingredients back when a mix finishes.", P_("mixologist"), "undo-2");
-            A(b, 2, 0, "lab_focus", "Lab Focus", 3, 35, 0, CooldownClock.GameMinutes, 1440, 180,
-                "For 3 hours, every batch you finish has a {0}% chance to come out one tier higher.", P_("precise_measures"), "scan-eye");
+            A(b, 2, 0, "lab_focus", "Lab Focus", 3, 40, 0, CooldownClock.GameMinutes, 1440, 240,
+                "For 4 hours, every batch you finish has a {0}% chance to come out one tier higher.", P_("precise_measures"), "scan-eye");
             T(b, 2, 2, "volatile_chemistry", "Volatile Chemistry", 2, 30, 10, "Chemistry stations, lab ovens and cauldrons work {0}% faster.",
                 "{1}% of batches drop one quality tier.", P_("steady_hands"), "flame");
             T(b, 3, 4, "complex_formulas", "Complex Formulas", 4, 12, 8, "Products with 3+ effects sell for {0}% more.",
@@ -173,9 +173,9 @@ namespace HylandSkills.Data
             P(b, 2, 3, "pawn_broker", "Pawn Broker", 2, 10, "The pawn shop opens {0}% higher and haggles more calmly.", P_("bulk_buyer"), "scale");
             T(b, 3, 1, "legit_fronts", "Legit Fronts", 2, 120, 15, "Each business you own earns ${0} clean money per day.",
                 "Laundering capacity is {1}% lower.", P_("atm_connections"), "store");
-            A(b, 3, 4, "rush_delivery", "Rush Delivery", 3, 60, 150, CooldownClock.GameMinutes, 1440, 0,
+            A(b, 3, 4, "rush_delivery", "Rush Delivery", 3, 60, 150, CooldownClock.GameMinutes, 720, 0,
                 "Your pending shop delivery arrives within {0} minutes. Costs a ${1} fee.", P_("express_shipping"), "package-check");
-            A(b, 4, 2, "cook_the_books", "Cook the Books", 3, 10, 0, CooldownClock.GameMinutes, 2880, 0,
+            A(b, 4, 2, "cook_the_books", "Cook the Books", 3, 10, 0, CooldownClock.GameMinutes, 1440, 0,
                 "Instantly finish all laundering operations, losing {0}% as fees.", P_("legit_fronts"), "file-pen");
             M(b, 1, "tycoon", "Tycoon", 25, "Laundering capacity +{0}% and operations finish {0}% faster.", "crown");
             M(b, 2, "union_boss", "Union Boss", 15, "Employees work {0}% faster and wages are 10% lower.", "users");
@@ -192,9 +192,9 @@ namespace HylandSkills.Data
             P(b, 1, 2, "high_roller", "High Roller", 2, 50, "Table betting limits are {0}% higher.", P_("card_sense"), "coins");
             P(b, 1, 4, "bus_rider", "Bus Rider", 2, 3, "Ride the Bus multipliers are {0}% higher.", P_("lucky_charm"), "bus");
             P(b, 2, 1, "laundered_luck", "Laundered Luck", 2, 20, "{0}% of your casino winnings go straight to your bank as clean money.", P_("high_roller"), "piggy-bank");
-            A(b, 2, 3, "hot_streak", "Hot Streak", 3, 15, 0, CooldownClock.GameMinutes, 1440, 120,
-                "For 2 hours, every casino win pays {0}% more.", P_("lucky_charm"), "flame-kindling");
-            A(b, 3, 0, "peek", "Peek", 3, 0, 0, CooldownClock.GameMinutes, 1440, 0,
+            A(b, 2, 3, "hot_streak", "Hot Streak", 3, 20, 0, CooldownClock.GameMinutes, 1440, 180,
+                "For 3 hours, every casino win pays {0}% more.", P_("lucky_charm"), "flame-kindling");
+            A(b, 3, 0, "peek", "Peek", 3, 0, 0, CooldownClock.GameMinutes, 60, 0,
                 "At the blackjack table: see the dealer's face-down card.", P_("loss_insurance"), "eye");
             T(b, 4, 2, "double_or_nothing", "Double or Nothing", 3, 20, 20, "Blackjack wins pay {0}% more.",
                 "Losing a blackjack hand costs an extra {1}% of the bet.", P_("laundered_luck"), "repeat-2");
@@ -213,13 +213,13 @@ namespace HylandSkills.Data
             P(b, 1, 2, "party_planner", "Party Planner", 2, 15, "Special crowds (Hippies, Bikers, Businessmen, Party Bus) buy {0}% more per deal.", P_("silver_tongue"), "party-popper");
             P(b, 1, 4, "people_person", "People Person", 2, 20, "Deals build {0}% more relationship.", P_("free_taste"), "heart-handshake");
             T(b, 2, 1, "premium_brand", "Premium Brand", 2, 15, 20, "Customers pay {0}% more per deal.", "Customers order {1}% less often.", P_("party_planner"), "tag");
-            A(b, 2, 4, "hype_text", "Hype Text", 3, 3, 0, CooldownClock.GameMinutes, 1440, 0,
+            A(b, 2, 4, "hype_text", "Hype Text", 3, 4, 0, CooldownClock.GameMinutes, 720, 0,
                 "Text your contacts: up to {0} customers ask for a deal right now.", P_("people_person"), "smartphone");
             T(b, 3, 0, "addiction_economics", "Addiction Economics", 2, 40, 100, "Your products are {0}% more addictive.",
                 "Rejected or missed deals hurt relationships {1}% more.", P_("dealer_network"), "trending-up");
             P(b, 3, 2, "scene_regular", "Scene Regular", 2, 30, "Special customer crowds come back to town {0}% more often.", P_("party_planner"), "tent");
-            A(b, 4, 3, "rush_hour", "Rush Hour", 3, 20, 0, CooldownClock.GameMinutes, 1440, 120,
-                "For 2 hours, deals you complete pay {0}% more.", P_("hype_text"), "timer");
+            A(b, 4, 3, "rush_hour", "Rush Hour", 3, 25, 0, CooldownClock.GameMinutes, 1440, 180,
+                "For 3 hours, deals you complete pay {0}% more.", P_("hype_text"), "timer");
             M(b, 1, "street_legend", "Street Legend", 10, "Customers accept counteroffers up to {0}% higher, and 15% of deals include a tip.", "star");
             M(b, 2, "kingmaker", "Kingmaker", 5, "Dealers take another {0}% smaller cut and their deals pay 10% more.", "medal");
             M(b, 3, "vip_host", "VIP Host", 25, "Special customer deals pay {0}% more.", "ticket");
@@ -234,9 +234,9 @@ namespace HylandSkills.Data
             P(b, 1, 0, "hidden_pockets", "Hidden Pockets", 3, 12, "{0}% chance a police body search finds nothing.", P_("low_profile"), "shirt");
             P(b, 1, 2, "night_owl", "Night Owl", 3, 10, "During curfew, police take an extra {0}% longer to notice you.", P_("low_profile"), "moon");
             T(b, 2, 0, "clean_hands", "Clean Hands", 2, 35, 100, "Police give up searching for you {0}% sooner.", "Fines when arrested are {1}% higher.", P_("hidden_pockets"), "eraser");
-            A(b, 2, 2, "police_scanner", "Police Scanner", 3, 60, 0, CooldownClock.GameMinutes, 1440, 120,
-                "For 2 hours, police within {0}m are marked on your screen.", P_("night_owl"), "radio");
-            A(b, 3, 4, "vanish", "Vanish", 4, 0, 0, CooldownClock.RealSeconds, 600, 0,
+            A(b, 2, 2, "police_scanner", "Police Scanner", 3, 80, 0, CooldownClock.GameMinutes, 720, 180,
+                "For 3 hours, police within {0}m are marked on your screen.", P_("night_owl"), "radio");
+            A(b, 3, 4, "vanish", "Vanish", 4, 0, 0, CooldownClock.RealSeconds, 300, 0,
                 "If no officer can see you, the pursuit ends instantly.", P_("light_steps"), "ghost");
             T(b, 4, 1, "ghost_protocol", "Ghost Protocol", 4, 0, 25, "Police never body-search you during the day.",
                 "During curfew, police notice you {1}% faster.", P_("clean_hands"), "sun-dim");
@@ -256,9 +256,9 @@ namespace HylandSkills.Data
             P(b, 1, 4, "kickflip", "Kickflip", 2, 5, "Skateboard jumps are {0}% higher.", P_("board_feel"), "move-up");
             P(b, 2, 0, "cat_burglar", "Cat Burglar", 1, 30, "You move {0}% faster while crouched.", P_("double_jump"), "cat", cost: 2);
             T(b, 2, 4, "air_control", "Air Control", 2, 40, 10, "Your board stays level in the air: leaning forward or back tilts it {0}% less.", "Your board turns {1}% slower on the ground.", P_("kickflip"), "feather");
-            A(b, 3, 1, "sprint_burst", "Sprint Burst", 3, 40, 0, CooldownClock.RealSeconds, 90, 8,
-                "For 8 seconds, move {0}% faster.", P_("fleet_foot"), "rabbit");
-            A(b, 4, 3, "board_boost", "Board Boost", 4, 20, 0, CooldownClock.RealSeconds, 30, 0,
+            A(b, 3, 1, "sprint_burst", "Sprint Burst", 3, 60, 0, CooldownClock.RealSeconds, 60, 12,
+                "For 12 seconds, move {0}% faster and sprint without using stamina.", P_("fleet_foot"), "rabbit");
+            A(b, 4, 3, "board_boost", "Board Boost", 4, 25, 0, CooldownClock.RealSeconds, 15, 0,
                 "While skating: an instant burst of {0} km/h.", P_("push_power"), "rocket");
             M(b, 1, "parkour", "Parkour", 0, "Double Jump becomes a triple jump, and every mid-air jump is 20% higher.", "mountain");
             M(b, 2, "street_surfer", "Street Surfer", 15, "Your skateboard is {0}% faster and pushes recharge twice as fast.", "waves");
@@ -273,10 +273,10 @@ namespace HylandSkills.Data
             P(b, 1, 0, "second_wind", "Second Wind", 3, 40, "Health regenerates {0}% faster.", P_("thick_skin"), "heart-pulse");
             P(b, 1, 4, "steady_aim", "Steady Aim", 2, 15, "Firearm spread is {0}% lower.", P_("heavy_hands"), "crosshair");
             T(b, 2, 1, "bruiser_build", "Bruiser Build", 2, 15, 6, "Take {0}% less damage.", "Move {1}% slower.", P_("thick_skin"), "shield-half");
-            A(b, 2, 3, "adrenaline", "Adrenaline", 3, 40, 20, CooldownClock.RealSeconds, 180, 12,
-                "For 12 seconds, take {0}% less damage and move {1}% faster.", P_("heavy_hands"), "zap");
+            A(b, 2, 3, "adrenaline", "Adrenaline", 3, 50, 25, CooldownClock.RealSeconds, 120, 15,
+                "For 15 seconds, take {0}% less damage and move {1}% faster.", P_("heavy_hands"), "zap");
             T(b, 3, 0, "notorious", "Notorious", 4, 50, 15, "The cartel ambushes you {0}% less often.", "Police notice you {1}% faster.", P_("bruiser_build"), "siren");
-            A(b, 4, 3, "intimidate", "Intimidate", 4, 15, 10, CooldownClock.RealSeconds, 300, 10,
+            A(b, 4, 3, "intimidate", "Intimidate", 4, 20, 20, CooldownClock.RealSeconds, 180, 20,
                 "Cartel goons within {0}m flee from you for {1} seconds.", P_("adrenaline"), "skull");
             M(b, 1, "juggernaut", "Juggernaut", 20, "Take {0}% less damage and hits no longer make you flinch.", "shield-plus");
             M(b, 2, "gunslinger", "Gunslinger", 25, "Firearms deal {0}% more damage.", "target");

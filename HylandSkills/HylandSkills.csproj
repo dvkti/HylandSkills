@@ -9,7 +9,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591;CS0618;MSB3277</NoWarn>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <!-- Thunderstore profile that hosts MelonLoader, S1API and the generated interop assemblies -->
     <S1Profile Condition="'$(S1Profile)' == ''">$(APPDATA)\Thunderstore Mod Manager\DataFolder\ScheduleI\profiles\Default</S1Profile>
     <MLDir>$(S1Profile)\MelonLoader\net6</MLDir>
@@ -31,8 +31,12 @@
     <Reference Include="$(InteropDir)\*.dll" Exclude="$(InteropDir)\Il2CppMono.*.dll"><Private>false</Private></Reference>
   </ItemGroup>
 
-  <!-- Copy the built mod straight into the profile's Mods folder -->
+  <!-- Copy the built mod into the profile, in the same folder Thunderstore / r2modman use for the package
+       (Mods/<author>-<name>/Mods), so importing the release zip later replaces it instead of loading a second copy -->
   <Target Name="DeployToProfile" AfterTargets="Build" Condition="'$(Deploy)' == 'true'">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(S1Profile)\Mods" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(S1Profile)\Mods\GetToWorkTylerPls-HylandSkills\Mods" />
+    <!-- MelonLoader only loads a package folder that has its manifest.json -->
+    <Copy SourceFiles="..\dist\pkg\manifest.json;..\dist\pkg\icon.png;..\dist\pkg\README.md;..\dist\pkg\LICENSE-lucide.txt" DestinationFolder="$(S1Profile)\Mods\GetToWorkTylerPls-HylandSkills" />
+    <Delete Files="$(S1Profile)\Mods\HylandSkills.dll" />
   </Target>
 </Project>

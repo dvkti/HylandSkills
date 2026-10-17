@@ -230,7 +230,8 @@ namespace HylandSkills.Actives
         {
             int n = DealsModule.HypeText((int)Def.Value);
             if (n > 0) UI.Hud.ShowToast($"Hype Text: {n} customer{(n == 1 ? "" : "s")} hit you up", Data.SkillDb.Info(Data.Branch.Hustle).Color);
-            return n > 0;
+            if (n == 0) FailReason = "Nobody answered, try again later";
+            return n > 0; // nobody answered: the cooldown is not spent
         }
 
         public override bool CanActivate(out string reason)
@@ -239,6 +240,11 @@ namespace HylandSkills.Actives
             if (Il2CppScheduleOne.Economy.Customer.UnlockedCustomers == null || Il2CppScheduleOne.Economy.Customer.UnlockedCustomers.Count == 0)
             {
                 reason = "You don't have any customers yet";
+                return false;
+            }
+            if (DealsModule.HypeCandidates().Count == 0)
+            {
+                reason = "No free customer wants what you sell (list products in the Products app)";
                 return false;
             }
             return true;
@@ -333,6 +339,15 @@ namespace HylandSkills.Actives
     {
         public override string Id => "sprint_burst";
         public override bool Activate() => true;
+
+        /// <summary>The burst also keeps stamina full, so it can be spent sprinting.</summary>
+        public override void Tick()
+        {
+            if (!PlayerSingleton<Il2CppScheduleOne.PlayerScripts.PlayerMovement>.InstanceExists) return;
+            var pm = PlayerSingleton<Il2CppScheduleOne.PlayerScripts.PlayerMovement>.Instance;
+            float max = Il2CppScheduleOne.PlayerScripts.PlayerMovement.StaminaReserveMax;
+            if (pm != null && pm.CurrentStaminaReserve < max) pm.SetStamina(max, false);
+        }
     }
 
     public sealed class BoardBoost : ActiveSkill

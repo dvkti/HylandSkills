@@ -8,7 +8,7 @@ The player guide (how points work, controls, every branch) is in [HylandSkills/R
 
 ## Install
 
-Download the zip from the [Releases](../../releases) page and install it with Thunderstore / r2modman, or put `Mods/HylandSkills.dll` in your game's `Mods` folder. It needs MelonLoader and S1API (Forked).
+Download `GetToWorkTylerPls-HylandSkills-<version>.zip` from the [Releases](../../releases) page (not the "Source code" zip) and import it in Thunderstore Mod Manager or r2modman with **Settings → Import local mod**. It needs MelonLoader and S1API (Forked). For a manual install, put `HylandSkills.dll` straight into the `Mods` folder. More detail is in [HylandSkills/README.md](HylandSkills/README.md#installation).
 
 ## Build from source
 
@@ -19,7 +19,7 @@ cd HylandSkills
 dotnet build -c Release
 ```
 
-The project reads its references from the Thunderstore profile `Default`. Point it at another profile with `-p:S1Profile="<path to the profile>"`. Add `-p:Deploy=true` to copy the built DLL into that profile's `Mods` folder.
+The project reads its references from the Thunderstore profile `Default`. Point it at another profile with `-p:S1Profile="<path to the profile>"`. Add `-p:Deploy=true` to install the build into that profile as a package (`Mods/GetToWorkTylerPls-HylandSkills/`, the same folder the mod manager uses).
 
 ## Repository layout
 

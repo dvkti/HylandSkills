@@ -243,6 +243,7 @@ namespace HylandSkills.UI
             Tweens.Update(Time.unscaledDeltaTime);
             branch?.Animate();
             overview?.Animate();
+            if (page == Page.Loadout) loadout?.TickTimers(Time.unscaledDeltaTime);
             if (KeyRebinder.IsListening)
             {
                 if (page == Page.Loadout) loadout?.Refresh();

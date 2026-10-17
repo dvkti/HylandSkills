@@ -193,7 +193,6 @@ namespace HylandSkills.Effects
                 if (paid <= 0) return;
                 float m = 1f;
                 if (Skills.Has("clean_hands")) m *= 1f + Skills.Pct2("clean_hands");
-                if (Skills.SynergyActive("offshore_accounts")) m *= 0.5f;
                 float extra = paid * (m - 1f);
                 if (Mathf.Abs(extra) < 1f) return;
                 if (extra > 0) Money.TrySpendCash(Mathf.Min(extra, Money.Cash));

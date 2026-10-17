@@ -19,6 +19,8 @@ namespace HylandSkills.Actives
         public virtual bool CanActivate(out string reason) { reason = null; return true; }
         /// <summary>Return false if activation failed after all; the cooldown is then not consumed.</summary>
         public abstract bool Activate();
+        /// <summary>Optional message for a failed <see cref="Activate"/>.</summary>
+        public string FailReason;
         public virtual void OnEnd() { }
         /// <summary>Effect length for this activation (combos can change it). Same clock as the skill.</summary>
         public virtual float Duration => Def.Duration;
@@ -63,12 +65,37 @@ namespace HylandSkills.Actives
         // ---------------- loadout ----------------
         public static string Slot(int i) => i >= 0 && i < D.Loadout.Length ? D.Loadout[i] : null;
 
+        /// <summary>Game-clock skills put in a slot wait at most this long (12 game hours) before their first use.</summary>
+        public const int SwapCooldownCapMinutes = 720;
+
+        /// <summary>
+        /// Puts a skill in a slot. A skill that was not equipped starts its cooldown (game-clock skills: at most
+        /// 12 game hours), so the loadout is a choice and not something to swap for each situation. Moving a skill
+        /// between slots is free.
+        /// </summary>
         public static void Equip(int slot, string id)
         {
             if (slot < 0 || slot >= D.Loadout.Length) return;
+            bool wasEquipped = SlotOf(id) >= 0;
             for (int i = 0; i < D.Loadout.Length; i++) if (D.Loadout[i] == id) D.Loadout[i] = null;
             D.Loadout[slot] = id;
+            if (!wasEquipped) StartSwapCooldown(id);
             Skills.NotifyChanged();
+        }
+
+        /// <summary>Cooldown a skill gets when it is put in a slot, in its own clock.</summary>
+        public static float SwapCooldown(SkillDef d) =>
+            d.Clock == CooldownClock.GameMinutes ? Math.Min(d.Cooldown, SwapCooldownCapMinutes) : d.Cooldown;
+
+        static void StartSwapCooldown(string id)
+        {
+            var d = SkillDb.Get(id);
+            if (d == null) return;
+            float cd = SwapCooldown(d);
+            if (cd <= 0 || CooldownLeft(id) >= cd) return;
+            totalCooldown[id] = cd;
+            if (d.Clock == CooldownClock.GameMinutes) D.GameCooldownUntil[id] = GameNow + (int)cd;
+            else D.RealCooldownLeft[id] = cd;
         }
 
         public static void Unequip(int slot)
@@ -153,9 +180,10 @@ namespace HylandSkills.Actives
             if (CooldownLeft(id) > 0) { ActivationFailed?.Invoke(id, "Not ready"); return false; }
             if (!s.CanActivate(out var reason)) { ActivationFailed?.Invoke(id, reason ?? "Can't use that now"); return false; }
             bool ok;
+            s.FailReason = null;
             try { ok = s.Activate(); }
             catch (Exception e) { Mod.Log.Error($"Active {id} failed: {e}"); ok = false; }
-            if (!ok) { ActivationFailed?.Invoke(id, "Can't use that now"); return false; }
+            if (!ok) { ActivationFailed?.Invoke(id, s.FailReason ?? "Can't use that now"); return false; }
 
             float dur = s.Duration, cd = s.Cooldown;
             totalDuration[id] = dur;

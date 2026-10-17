@@ -12,7 +12,7 @@ using Il2CppScheduleOne.UI.Phone;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(HylandSkills.Mod), "Hyland Skills", "1.1.0", "GetToWorkTylerPls")]
+[assembly: MelonInfo(typeof(HylandSkills.Mod), "Hyland Skills", "1.2.0", "GetToWorkTylerPls")]
 [assembly: MelonGame("TVGS", "Schedule I")]
 
 namespace HylandSkills

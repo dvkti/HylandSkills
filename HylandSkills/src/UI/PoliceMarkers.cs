@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using HylandSkills.Actives;
+using Il2CppScheduleOne.DevUtilities;
 using Il2CppScheduleOne.PlayerScripts;
 using Il2CppScheduleOne.Police;
+using Il2CppScheduleOne.UI.Phone;
 using Il2CppTMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +11,11 @@ using static HylandSkills.UI.UiKit;
 
 namespace HylandSkills.UI
 {
-    /// <summary>Police Scanner: badges over nearby officers (clamped to the screen edge when off-screen).</summary>
+    /// <summary>
+    /// Police Scanner: badges over nearby officers (clamped to the screen edge when off-screen). They live on their
+    /// own canvas drawn just below the game's HUD, and hide while the phone or any game menu is open, so they never
+    /// cover the game's interface.
+    /// </summary>
     public static class PoliceMarkers
     {
         sealed class Marker
@@ -21,20 +27,50 @@ namespace HylandSkills.UI
 
         static readonly List<Marker> pool = new List<Marker>();
         static RectTransform layer;
+        static Canvas canvas;
 
-        public static void Tick(RectTransform hudRoot)
+        /// <summary>True while the phone or any game screen that frees the cursor is open.</summary>
+        static bool GameUiOpen()
         {
-            bool active = ActiveManager.IsRunning("police_scanner");
+            try
+            {
+                if (PlayerSingleton<PlayerCamera>.InstanceExists && PlayerSingleton<PlayerCamera>.Instance.ActiveUIElementCount > 0) return true;
+                if (PlayerSingleton<Phone>.InstanceExists && PlayerSingleton<Phone>.Instance.IsOpen) return true;
+            }
+            catch { }
+            return false;
+        }
+
+        static void EnsureLayer(Canvas hud)
+        {
+            if (layer != null) return;
+            var go = new GameObject("HylandSkillsPoliceMarkers");
+            canvas = go.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            var scaler = go.AddComponent<CanvasScaler>();
+            var hudScaler = hud.GetComponent<CanvasScaler>();
+            if (hudScaler != null)
+            {
+                scaler.uiScaleMode = hudScaler.uiScaleMode;
+                scaler.referenceResolution = hudScaler.referenceResolution;
+                scaler.screenMatchMode = hudScaler.screenMatchMode;
+                scaler.matchWidthOrHeight = hudScaler.matchWidthOrHeight;
+                scaler.scaleFactor = hudScaler.scaleFactor;
+            }
+            layer = go.GetComponent<RectTransform>();
+        }
+
+        public static void Tick(RectTransform hudRoot, Canvas hud)
+        {
+            bool active = ActiveManager.IsRunning("police_scanner") && hud != null && hud.enabled
+                          && hudRoot.gameObject.activeInHierarchy && !GameUiOpen();
             if (!active)
             {
                 if (layer != null) layer.gameObject.SetActive(false);
                 return;
             }
-            if (layer == null)
-            {
-                layer = Rect("PoliceMarkers", hudRoot).Stretch();
-                layer.SetAsFirstSibling();
-            }
+            EnsureLayer(hud);
+            canvas.sortingOrder = hud.sortingOrder - 1; // under the HUD and everything drawn above it
             layer.gameObject.SetActive(true);
 
             var cam = Camera.main;
@@ -44,7 +80,7 @@ namespace HylandSkills.UI
             if (cam != null && me != null && officers != null)
             {
                 float range = Data.SkillDb.Get("police_scanner").Value;
-                var canvasRect = hudRoot;
+                var canvasRect = layer;
                 foreach (var o in officers)
                 {
                     if (o == null || !o.gameObject.activeInHierarchy || !o.IsConscious) continue;
@@ -99,7 +135,9 @@ namespace HylandSkills.UI
         public static void Clear()
         {
             pool.Clear();
+            if (layer != null) Object.Destroy(layer.gameObject);
             layer = null;
+            canvas = null;
         }
     }
 }

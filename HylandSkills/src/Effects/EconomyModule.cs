@@ -232,24 +232,50 @@ namespace HylandSkills.Effects
         }
 
         // ---------------------------------------------------------------- pawn shop (Pawn Broker)
-        [HarmonyPatch(typeof(PawnShopInterface), nameof(PawnShopInterface.StartNegotiation))]
+        // The opening offer is set a moment after the start button (the shopkeeper "thinks" first), through SetOffer.
+        // Pawn Broker raises that first offer of each negotiation; later counteroffers build on it.
+        static bool pawnOpeningPending;
+
+        [HarmonyPatch(typeof(PawnShopInterface), nameof(PawnShopInterface.StartButtonPressed))]
+        static class PawnStart
+        {
+            static void Prefix() => pawnOpeningPending = true;
+        }
+
+        [HarmonyPatch(typeof(PawnShopInterface), nameof(PawnShopInterface.SetOffer))]
         static class PawnOpen
         {
-            static void Postfix(PawnShopInterface __instance)
+            static void Prefix(PawnShopInterface __instance, ref float amount)
             {
-                if (__instance == null || !Skills.Has("pawn_broker")) return;
-                float m = 1f + Skills.Pct("pawn_broker");
-                __instance.InitialShopOffer *= m;
-                __instance.LastShopOffer *= m;
+                if (!pawnOpeningPending) return;
+                pawnOpeningPending = false;
+                if (__instance == null || !Skills.Has("pawn_broker") || amount <= 0) return;
+                float before = amount;
+                amount = Mathf.Round(amount * (1f + Skills.Pct("pawn_broker")));
+                // the opening offer is also the reference the shopkeeper's later counteroffers are measured against
+                if (Mathf.Approximately(__instance.InitialShopOffer, before)) __instance.InitialShopOffer = amount;
+                if (Mod.Tracing) Mod.Debug($"[trace] Pawn opening offer {before:0.##} -> {amount:0.##}");
             }
         }
 
-        [HarmonyPatch(typeof(PawnShopInterface), nameof(PawnShopInterface.EvaluateCounter))]
+        /// <summary>
+        /// Pawn Broker keeps the shopkeeper calmer: the anger a counteroffer adds is scaled after the game applied it.
+        /// (A postfix on EvaluateCounter's out parameters corrupted them, the same way GetBetLimits broke the casino
+        /// slider, so the anger value itself is adjusted around the button handler instead.)
+        /// </summary>
+        [HarmonyPatch(typeof(PawnShopInterface), nameof(PawnShopInterface.AcceptOrCounter))]
         static class PawnCalm
         {
-            static void Postfix(ref float angerChange)
+            static void Prefix(PawnShopInterface __instance, out float __state) => __state = __instance != null ? __instance._NPCAnger_k__BackingField : 0f;
+
+            static void Postfix(PawnShopInterface __instance, float __state)
             {
-                if (Skills.Has("pawn_broker") && angerChange > 0) angerChange *= Mathf.Max(0.3f, 1f - 2f * Skills.Pct("pawn_broker"));
+                if (__instance == null || !Skills.Has("pawn_broker")) return;
+                float after = __instance._NPCAnger_k__BackingField;
+                if (after <= __state) return;
+                float calmer = __state + (after - __state) * Mathf.Max(0.3f, 1f - 2f * Skills.Pct("pawn_broker"));
+                __instance._NPCAnger_k__BackingField = calmer;
+                if (Mod.Tracing) Mod.Debug($"[trace] Pawn anger {__state:0.##} -> {after:0.##}, calmer {calmer:0.##}");
             }
         }
 
